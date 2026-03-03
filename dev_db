@@ -1,0 +1,583 @@
+/*
+SQLyog Community v13.3.0 (64 bit)
+MySQL - 8.0.44 : Database - dev_db
+*********************************************************************
+*/
+
+/*!40101 SET NAMES utf8 */;
+
+/*!40101 SET SQL_MODE=''*/;
+
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`dev_db` /*!40100 DEFAULT CHARACTER SET utf8mb3 */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `dev_db`;
+
+/*Table structure for table `audit_logs` */
+
+DROP TABLE IF EXISTS `audit_logs`;
+
+CREATE TABLE `audit_logs` (
+  `log_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int unsigned NOT NULL,
+  `action` varchar(64) NOT NULL,
+  `entity_type` varchar(64) DEFAULT NULL,
+  `entity_id` bigint unsigned DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `details` json DEFAULT NULL,
+  `success` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`log_id`),
+  KEY `idx_user_action_time` (`user_id`,`action`,`created_at`),
+  KEY `idx_action_time` (`action`,`created_at`),
+  KEY `idx_entity` (`entity_type`,`entity_id`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPRESSED;
+
+/*Data for the table `audit_logs` */
+
+/*Table structure for table `permissions` */
+
+DROP TABLE IF EXISTS `permissions`;
+
+CREATE TABLE `permissions` (
+  `permission_id` int NOT NULL AUTO_INCREMENT,
+  `permission_name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT 'When this assignment was created',
+  `created_by` int unsigned DEFAULT NULL COMMENT 'user_id who performed the assignment (or NULL for system)',
+  `updated_at` datetime(3) DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3) COMMENT 'Last time this row was modified (if ever)',
+  `updated_by` int unsigned DEFAULT NULL COMMENT 'user_id who last modified it',
+  `deleted_at` datetime(3) DEFAULT NULL COMMENT 'Soft-delete timestamp — set when revoked',
+  `deleted_by` int unsigned DEFAULT NULL COMMENT 'Who revoked it',
+  PRIMARY KEY (`permission_id`),
+  UNIQUE KEY `permission_name` (`permission_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `permissions` */
+
+insert  into `permissions`(`permission_id`,`permission_name`,`description`,`created_at`,`created_by`,`updated_at`,`updated_by`,`deleted_at`,`deleted_by`) values 
+(1,'rbac:full_access','Full system access – bypasses all permission checks (super-admin only)','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(2,'user:create','Create new user accounts','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(3,'user:update','Modify user profile fields (name, email, password, contact, address, etc.)','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(4,'user:delete','Deactivate or delete user accounts','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(5,'user:read','View user profile information','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(6,'user:manage','Assign, revoke or change roles for other users','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(7,'role:create','Create new role definitions','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(8,'role:update','Modify role names, descriptions, assigned permissions','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(9,'role:delete','Delete role definitions (high risk – cascades to user_roles)','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(10,'role:read','View role definitions and their permissions','2026-03-03 16:18:18.152',NULL,NULL,NULL,NULL,NULL),
+(11,'role:manage','Assign, revoke or change roles for other roles','2026-03-03 16:18:18.152',NULL,'2026-03-03 16:34:35.824',NULL,NULL,NULL),
+(12,'public:read_home','View homepage','2026-03-03 16:34:21.308',NULL,NULL,NULL,NULL,NULL),
+(13,'public:read_pages','View static/about/contact pages','2026-03-03 16:34:21.308',NULL,NULL,NULL,NULL,NULL),
+(14,'public:read_catalog','Browse product/item listings','2026-03-03 16:34:21.308',NULL,NULL,NULL,NULL,NULL),
+(15,'public:read_details','View item/product details','2026-03-03 16:34:21.308',NULL,NULL,NULL,NULL,NULL);
+
+/*Table structure for table `role_permissions` */
+
+DROP TABLE IF EXISTS `role_permissions`;
+
+CREATE TABLE `role_permissions` (
+  `role_id` int NOT NULL,
+  `permission_id` int NOT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT 'When this assignment was created',
+  `created_by` int unsigned DEFAULT NULL COMMENT 'user_id who performed the assignment (or NULL for system)',
+  `updated_at` datetime(3) DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3) COMMENT 'Last time this row was modified (if ever)',
+  `updated_by` int unsigned DEFAULT NULL COMMENT 'user_id who last modified it',
+  `deleted_at` datetime(3) DEFAULT NULL COMMENT 'Soft-delete timestamp — set when revoked',
+  `deleted_by` int unsigned DEFAULT NULL COMMENT 'Who revoked it',
+  PRIMARY KEY (`role_id`,`permission_id`),
+  KEY `FK_RolePermissions_Permission` (`permission_id`),
+  CONSTRAINT `FK_RolePermissions_Permission` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`permission_id`),
+  CONSTRAINT `FK_RolePermissions_Role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `role_permissions` */
+
+insert  into `role_permissions`(`role_id`,`permission_id`,`created_at`,`created_by`,`updated_at`,`updated_by`,`deleted_at`,`deleted_by`) values 
+(1,1,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,2,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,3,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,4,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,5,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,6,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,7,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(1,8,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(2,4,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(2,8,'2026-03-03 16:18:03.736',NULL,NULL,NULL,NULL,NULL),
+(3,12,'2026-03-03 16:34:56.556',NULL,NULL,NULL,NULL,NULL),
+(3,13,'2026-03-03 16:34:56.556',NULL,NULL,NULL,NULL,NULL),
+(3,14,'2026-03-03 16:34:56.556',NULL,NULL,NULL,NULL,NULL),
+(3,15,'2026-03-03 16:34:56.556',NULL,NULL,NULL,NULL,NULL);
+
+/*Table structure for table `roles` */
+
+DROP TABLE IF EXISTS `roles`;
+
+CREATE TABLE `roles` (
+  `role_id` int NOT NULL AUTO_INCREMENT,
+  `role_name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT 'When this assignment was created',
+  `created_by` int unsigned DEFAULT NULL COMMENT 'user_id who performed the assignment (or NULL for system)',
+  `updated_at` datetime(3) DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3) COMMENT 'Last time this row was modified (if ever)',
+  `updated_by` int unsigned DEFAULT NULL COMMENT 'user_id who last modified it',
+  `deleted_at` datetime(3) DEFAULT NULL COMMENT 'Soft-delete timestamp — set when revoked',
+  `deleted_by` int unsigned DEFAULT NULL COMMENT 'Who revoked it',
+  PRIMARY KEY (`role_id`),
+  UNIQUE KEY `role_name` (`role_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `roles` */
+
+insert  into `roles`(`role_id`,`role_name`,`description`,`created_at`,`created_by`,`updated_at`,`updated_by`,`deleted_at`,`deleted_by`) values 
+(1,'System','Full access to all modules','2026-03-03 16:17:18.301',NULL,NULL,NULL,NULL,NULL),
+(2,'User','Standard user with limited access','2026-03-03 16:17:18.301',NULL,NULL,NULL,NULL,NULL),
+(3,'Guest','Unauthenticated public visitor – read-only','2026-03-03 16:34:05.212',NULL,NULL,NULL,NULL,NULL);
+
+/*Table structure for table `user_roles` */
+
+DROP TABLE IF EXISTS `user_roles`;
+
+CREATE TABLE `user_roles` (
+  `user_id` int NOT NULL,
+  `role_id` int NOT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT 'When this assignment was created',
+  `created_by` int unsigned DEFAULT NULL COMMENT 'user_id who performed the assignment (or NULL for system)',
+  `updated_at` datetime(3) DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3) COMMENT 'Last time this row was modified (if ever)',
+  `updated_by` int unsigned DEFAULT NULL COMMENT 'user_id who last modified it',
+  `deleted_at` datetime(3) DEFAULT NULL COMMENT 'Soft-delete timestamp — set when revoked',
+  `deleted_by` int unsigned DEFAULT NULL COMMENT 'Who revoked it',
+  PRIMARY KEY (`user_id`,`role_id`),
+  KEY `FK_UserRoles_Role` (`role_id`),
+  CONSTRAINT `FK_UserRoles_Role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`),
+  CONSTRAINT `FK_UserRoles_User` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `user_roles` */
+
+insert  into `user_roles`(`user_id`,`role_id`,`created_at`,`created_by`,`updated_at`,`updated_by`,`deleted_at`,`deleted_by`) values 
+(1,2,'2026-03-03 16:16:59.925',NULL,NULL,NULL,NULL,NULL),
+(2,1,'2026-03-03 16:16:59.925',NULL,NULL,NULL,NULL,NULL);
+
+/*Table structure for table `users` */
+
+DROP TABLE IF EXISTS `users`;
+
+CREATE TABLE `users` (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `user_guid` char(36) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
+  `contact_no` varchar(100) DEFAULT NULL,
+  `address` varchar(100) DEFAULT NULL,
+  `failed_login_count` int NOT NULL DEFAULT '0',
+  `last_failed_login` datetime DEFAULT NULL,
+  `locked_until` datetime DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `is_online` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int DEFAULT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `user_guid` (`user_guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `users` */
+
+insert  into `users`(`user_id`,`user_guid`,`username`,`password_hash`,`name`,`last_name`,`email`,`contact_no`,`address`,`failed_login_count`,`last_failed_login`,`locked_until`,`is_active`,`is_online`,`created_at`,`created_by`,`updated_at`,`updated_by`,`deleted_at`,`deleted_by`) values 
+(1,'54413438-07e6-11f1-ba13-a841f4d6f713','User','$2a$12$y8GQvXzTj0c9kF8qvYQxGON8rP7Qv1v6xLx0M8/wJ5pEw/B0JnF.u','Test',NULL,NULL,NULL,NULL,0,NULL,NULL,1,0,'2026-02-12 15:42:06',NULL,NULL,NULL,NULL,NULL),
+(2,'6c127e1d-2a4f-4c6d-8821-e4453e597b52','Admin','$2a$11$UuMqZXgE/a3IMVmDV3130.PiS5d0tFmpgD0XyUr.CxfAd6l2n/Afu','Rocky','Bantolo',NULL,NULL,NULL,0,NULL,NULL,1,1,'2026-02-12 07:46:55',1,'2026-02-12 07:46:55',1,NULL,NULL);
+
+/* Procedure structure for procedure `role_permissions_assign` */
+
+/*!50003 DROP PROCEDURE IF EXISTS  `role_permissions_assign` */;
+
+DELIMITER $$
+
+/*!50003 CREATE PROCEDURE `role_permissions_assign`(
+    IN json_input JSON
+)
+    MODIFIES SQL DATA
+    SQL SECURITY INVOKER
+    COMMENT 'Assigns permissions to a role. Additive only. Success = no exception. Errors: 50011–50013'
+BEGIN
+    -- Variable declarations
+    DECLARE v_role_id         INT UNSIGNED;
+    DECLARE v_assigned_by     INT UNSIGNED;
+    DECLARE v_new_count       INT UNSIGNED;
+
+    -- Global exception handler
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    -- Parse & validate input
+    SET v_role_id     = JSON_VALUE(json_input, '$.role_id'     RETURNING UNSIGNED);
+    SET v_assigned_by = JSON_VALUE(json_input, '$.assigned_by' RETURNING UNSIGNED);
+
+    IF v_role_id IS NULL OR v_role_id = 0 THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50011,
+            MESSAGE_TEXT = 'role_id missing or invalid';
+    END IF;
+
+    IF v_assigned_by IS NULL OR v_assigned_by = 0 THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50012,
+            MESSAGE_TEXT = 'assigned_by missing or invalid';
+    END IF;
+
+    -- Strict privilege restriction: only users with 'role:manage_permissions' can execute
+    IF NOT EXISTS (
+        SELECT 1
+        FROM users u
+        INNER JOIN user_roles     ur  ON ur.user_id = u.user_id
+        INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+        INNER JOIN permissions    p   ON p.permission_id = rp.permission_id
+        WHERE u.user_id     = v_assigned_by
+          AND u.is_active   = 1
+          AND (u.locked_until IS NULL OR u.locked_until < NOW())
+          AND p.permission_name in ('role:manage', 'rbac:full_access')
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50013,
+            MESSAGE_TEXT = 'insufficient privilege to manage role permissions';
+    END IF;
+
+    START TRANSACTION;
+
+    -- Additive insert only (no replace/delete – revocation is separate operation)
+    INSERT IGNORE INTO role_permissions (role_id, permission_id)
+    SELECT
+        v_role_id,
+        jt.permission_id
+    FROM JSON_TABLE(
+        json_input,
+        '$.permission_ids[*]' COLUMNS (
+            permission_id INT PATH '$' ERROR ON ERROR
+        )
+    ) AS jt
+    WHERE jt.permission_id > 0;
+
+    -- Final state for audit
+    SELECT COUNT(*) INTO v_new_count
+    FROM role_permissions WHERE role_id = v_role_id;
+
+    -- Audit trail
+    INSERT INTO audit_logs (
+        user_id, action, entity_type, entity_id, details, success
+    ) VALUES (
+        v_assigned_by,
+        'role_permissions_assigned',
+        'role',
+        v_role_id,
+        JSON_OBJECT(
+            'target_role_id',       v_role_id,
+            'permission_ids_input', JSON_EXTRACT(json_input, '$.permission_ids'),
+            'new_permission_count', v_new_count,
+            'invoker',              CURRENT_USER(),
+            'timestamp_utc',        UTC_TIMESTAMP()
+        ),
+        1
+    );
+
+    COMMIT;
+END */$$
+DELIMITER ;
+
+/* Procedure structure for procedure `user_roles_assign` */
+
+/*!50003 DROP PROCEDURE IF EXISTS  `user_roles_assign` */;
+
+DELIMITER $$
+
+/*!50003 CREATE PROCEDURE `user_roles_assign`(
+    IN json_input JSON
+)
+    MODIFIES SQL DATA
+    SQL SECURITY INVOKER
+    COMMENT 'Assigns roles to target user. Success = no exception thrown. Errors use custom MYSQL_ERRNO 50001–50003'
+BEGIN
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Variable declarations
+    -- ────────────────────────────────────────────────────────────────
+    DECLARE v_user_id         INT UNSIGNED;
+    DECLARE v_assigned_by     INT UNSIGNED;
+    DECLARE v_new_role_count  INT UNSIGNED;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Global exception handler (rollback + rethrow on any error)
+    -- ────────────────────────────────────────────────────────────────
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Parse scalar input values + basic validation
+    -- ────────────────────────────────────────────────────────────────
+    SET v_user_id     = JSON_VALUE(json_input, '$.user_id'     RETURNING UNSIGNED);
+    SET v_assigned_by = JSON_VALUE(json_input, '$.assigned_by' RETURNING UNSIGNED);
+
+    IF v_user_id IS NULL OR v_user_id = 0 THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50001,
+            MESSAGE_TEXT = 'user_id missing or invalid';
+    END IF;
+
+    IF v_assigned_by IS NULL OR v_assigned_by = 0 THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50002,
+            MESSAGE_TEXT = 'assigned_by missing or invalid';
+    END IF;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Authorization check (RBAC-based)
+    -- Caller must hold at least one of the listed manage permissions
+    -- ────────────────────────────────────────────────────────────────
+    IF NOT EXISTS (
+        SELECT 1
+        FROM users u
+        INNER JOIN user_roles     ur  ON ur.user_id = u.user_id
+        INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+        INNER JOIN permissions    p   ON p.permission_id = rp.permission_id
+        WHERE u.user_id     = v_assigned_by
+          AND u.is_active   = 1
+          AND (u.locked_until IS NULL OR u.locked_until < NOW())
+          AND p.permission_name IN ('user:manage', 'rbac:full_access')
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET 
+            MYSQL_ERRNO = 50003,
+            MESSAGE_TEXT = 'insufficient privilege to assign roles';
+    END IF;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Begin transaction — all mutations are now atomic
+    -- ────────────────────────────────────────────────────────────────
+    START TRANSACTION;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Replace strategy: revoke all current roles of the target user
+    -- ────────────────────────────────────────────────────────────────
+    DELETE FROM user_roles WHERE user_id = v_user_id;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Assign requested roles (set-based)
+    --   • JSON_TABLE converts array to rows
+    --   • INT PATH + ERROR ON ERROR → strict type enforcement
+    --   • IGNORE → handles duplicates gracefully (PK constraint)
+    --   • WHERE jt.role_id > 0 → business-level filter (exclude ≤0)
+    -- ────────────────────────────────────────────────────────────────
+    INSERT IGNORE INTO user_roles (user_id, role_id)
+    SELECT
+        v_user_id,
+        jt.role_id
+    FROM JSON_TABLE(
+        json_input,
+        '$.role_ids[*]' COLUMNS (
+            role_id INT PATH '$' ERROR ON ERROR
+        )
+    ) AS jt
+    WHERE jt.role_id > 0;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Read final role count for audit trail
+    -- ────────────────────────────────────────────────────────────────
+    SELECT COUNT(*) INTO v_new_role_count
+    FROM user_roles WHERE user_id = v_user_id;
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Audit logging (immutable record of who changed what)
+    -- ────────────────────────────────────────────────────────────────
+    INSERT INTO audit_logs (
+        user_id, action, entity_type, entity_id, details, success
+    ) VALUES (
+        v_assigned_by,
+        'user_roles_assigned',
+        'user',
+        v_user_id,
+        JSON_OBJECT(
+            'target_user_id',   v_user_id,
+            'role_ids_input',   JSON_EXTRACT(json_input, '$.role_ids'),
+            'new_role_count',   v_new_role_count,
+            'invoker',          CURRENT_USER(),
+            'timestamp_utc',    UTC_TIMESTAMP()
+        ),
+        1
+    );
+
+
+    -- ────────────────────────────────────────────────────────────────
+    -- Commit — transaction completes only if no exception occurred
+    -- ────────────────────────────────────────────────────────────────
+    COMMIT;
+
+END */$$
+DELIMITER ;
+
+/*Table structure for table `v_role_permissions` */
+
+DROP TABLE IF EXISTS `v_role_permissions`;
+
+/*!50001 DROP VIEW IF EXISTS `v_role_permissions` */;
+/*!50001 DROP TABLE IF EXISTS `v_role_permissions` */;
+
+/*!50001 CREATE TABLE  `v_role_permissions`(
+ `role_id` int ,
+ `role_name` varchar(50) ,
+ `role_desc` varchar(255) ,
+ `permission_id` int ,
+ `permission_name` varchar(50) ,
+ `permission_desc` varchar(255) 
+)*/;
+
+/*Table structure for table `v_user_activity` */
+
+DROP TABLE IF EXISTS `v_user_activity`;
+
+/*!50001 DROP VIEW IF EXISTS `v_user_activity` */;
+/*!50001 DROP TABLE IF EXISTS `v_user_activity` */;
+
+/*!50001 CREATE TABLE  `v_user_activity`(
+ `user_id` int unsigned ,
+ `username` varchar(50) ,
+ `total_actions` bigint ,
+ `successful` bigint ,
+ `failed` bigint ,
+ `last_activity` datetime(3) ,
+ `first_seen` datetime(3) 
+)*/;
+
+/*Table structure for table `v_user_management` */
+
+DROP TABLE IF EXISTS `v_user_management`;
+
+/*!50001 DROP VIEW IF EXISTS `v_user_management` */;
+/*!50001 DROP TABLE IF EXISTS `v_user_management` */;
+
+/*!50001 CREATE TABLE  `v_user_management`(
+ `user_id` int ,
+ `username` varchar(50) ,
+ `email` varchar(50) ,
+ `can_do` varchar(50) ,
+ `impact_description` varchar(23) 
+)*/;
+
+/*Table structure for table `v_user_permissions` */
+
+DROP TABLE IF EXISTS `v_user_permissions`;
+
+/*!50001 DROP VIEW IF EXISTS `v_user_permissions` */;
+/*!50001 DROP TABLE IF EXISTS `v_user_permissions` */;
+
+/*!50001 CREATE TABLE  `v_user_permissions`(
+ `user_id` int ,
+ `username` varchar(50) ,
+ `email` varchar(50) ,
+ `permission_id` int ,
+ `permission_name` varchar(50) ,
+ `permission_desc` varchar(255) 
+)*/;
+
+/*Table structure for table `v_user_roles` */
+
+DROP TABLE IF EXISTS `v_user_roles`;
+
+/*!50001 DROP VIEW IF EXISTS `v_user_roles` */;
+/*!50001 DROP TABLE IF EXISTS `v_user_roles` */;
+
+/*!50001 CREATE TABLE  `v_user_roles`(
+ `user_id` int ,
+ `username` varchar(50) ,
+ `email` varchar(50) ,
+ `role_id` int ,
+ `role_name` varchar(50) ,
+ `role_desc` varchar(255) ,
+ `assigned_at` datetime(3) 
+)*/;
+
+/*Table structure for table `v_user_roles_history` */
+
+DROP TABLE IF EXISTS `v_user_roles_history`;
+
+/*!50001 DROP VIEW IF EXISTS `v_user_roles_history` */;
+/*!50001 DROP TABLE IF EXISTS `v_user_roles_history` */;
+
+/*!50001 CREATE TABLE  `v_user_roles_history`(
+ `user_id` int ,
+ `role_id` int ,
+ `created_at` datetime(3) ,
+ `created_by` int unsigned ,
+ `deleted_at` datetime(3) ,
+ `deleted_by` int unsigned 
+)*/;
+
+/*View structure for view v_role_permissions */
+
+/*!50001 DROP TABLE IF EXISTS `v_role_permissions` */;
+/*!50001 DROP VIEW IF EXISTS `v_role_permissions` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_role_permissions` AS select `r`.`role_id` AS `role_id`,`r`.`role_name` AS `role_name`,`r`.`description` AS `role_desc`,`p`.`permission_id` AS `permission_id`,`p`.`permission_name` AS `permission_name`,`p`.`description` AS `permission_desc` from ((`roles` `r` join `role_permissions` `rp` on((`rp`.`role_id` = `r`.`role_id`))) join `permissions` `p` on((`p`.`permission_id` = `rp`.`permission_id`))) */;
+
+/*View structure for view v_user_activity */
+
+/*!50001 DROP TABLE IF EXISTS `v_user_activity` */;
+/*!50001 DROP VIEW IF EXISTS `v_user_activity` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_user_activity` AS select `al`.`user_id` AS `user_id`,`u`.`username` AS `username`,count(0) AS `total_actions`,count((case when (`al`.`success` = 1) then 1 end)) AS `successful`,count((case when (`al`.`success` = 0) then 1 end)) AS `failed`,max(`al`.`created_at`) AS `last_activity`,min(`al`.`created_at`) AS `first_seen` from (`audit_logs` `al` join `users` `u` on((`u`.`user_id` = `al`.`user_id`))) group by `al`.`user_id`,`u`.`username` */;
+
+/*View structure for view v_user_management */
+
+/*!50001 DROP TABLE IF EXISTS `v_user_management` */;
+/*!50001 DROP VIEW IF EXISTS `v_user_management` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_user_management` AS select distinct `u`.`user_id` AS `user_id`,`u`.`username` AS `username`,`u`.`email` AS `email`,`p`.`permission_name` AS `can_do`,(case when (`p`.`permission_name` = 'user:manage_roles') then 'assign roles to users' when (`p`.`permission_name` = 'role:manage_permissions') then 'change role permissions' when (`p`.`permission_name` = 'rbac:full_access') then 'full bypass' else 'other' end) AS `impact_description` from (((`users` `u` join `user_roles` `ur` on((`ur`.`user_id` = `u`.`user_id`))) join `role_permissions` `rp` on((`rp`.`role_id` = `ur`.`role_id`))) join `permissions` `p` on((`p`.`permission_id` = `rp`.`permission_id`))) where (`p`.`permission_name` in ('user:manage_roles','role:manage_permissions','rbac:full_access')) */;
+
+/*View structure for view v_user_permissions */
+
+/*!50001 DROP TABLE IF EXISTS `v_user_permissions` */;
+/*!50001 DROP VIEW IF EXISTS `v_user_permissions` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_user_permissions` AS select distinct `u`.`user_id` AS `user_id`,`u`.`username` AS `username`,`u`.`email` AS `email`,`p`.`permission_id` AS `permission_id`,`p`.`permission_name` AS `permission_name`,`p`.`description` AS `permission_desc` from (((`users` `u` join `user_roles` `ur` on((`ur`.`user_id` = `u`.`user_id`))) join `role_permissions` `rp` on((`rp`.`role_id` = `ur`.`role_id`))) join `permissions` `p` on((`p`.`permission_id` = `rp`.`permission_id`))) where ((`u`.`is_active` = 1) and ((`u`.`locked_until` is null) or (`u`.`locked_until` < now()))) */;
+
+/*View structure for view v_user_roles */
+
+/*!50001 DROP TABLE IF EXISTS `v_user_roles` */;
+/*!50001 DROP VIEW IF EXISTS `v_user_roles` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_user_roles` AS select `u`.`user_id` AS `user_id`,`u`.`username` AS `username`,`u`.`email` AS `email`,`r`.`role_id` AS `role_id`,`r`.`role_name` AS `role_name`,`r`.`description` AS `role_desc`,`ur`.`created_at` AS `assigned_at` from ((`users` `u` join `user_roles` `ur` on((`ur`.`user_id` = `u`.`user_id`))) join `roles` `r` on((`r`.`role_id` = `ur`.`role_id`))) where (`u`.`is_active` = 1) */;
+
+/*View structure for view v_user_roles_history */
+
+/*!50001 DROP TABLE IF EXISTS `v_user_roles_history` */;
+/*!50001 DROP VIEW IF EXISTS `v_user_roles_history` */;
+
+/*!50001 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_user_roles_history` AS select `user_roles`.`user_id` AS `user_id`,`user_roles`.`role_id` AS `role_id`,`user_roles`.`created_at` AS `created_at`,`user_roles`.`created_by` AS `created_by`,`user_roles`.`deleted_at` AS `deleted_at`,`user_roles`.`deleted_by` AS `deleted_by` from `user_roles` order by `user_roles`.`user_id`,`user_roles`.`created_at` desc */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
