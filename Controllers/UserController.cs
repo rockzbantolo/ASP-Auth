@@ -13,47 +13,52 @@ namespace Base.Api.Controllers
     {
         private readonly IUserService _userService = userService;
 
-        [HttpPost]
-        [Authorize(Roles = "SystemAdmin")]// optional, only admins can create users
-        public async Task<IActionResult> Add([FromBody] CreateUserRequest request)
+        private SessionResponse BuildSession()
         {
-            // Build session from JWT claims
-            var userSession = new UserSession
-            {
-                Id = int.Parse(User.FindFirst("id")!.Value),
-                Username = User.Identity!.Name!,
-                Role = User.FindFirst("role")!.Value,
-                Token = "" // optional
-            };
-
-            var result = await _userService.AddAsync(request, userSession);
-            if (!result.Success)
-                return StatusCode(result.Code ?? 400, result);
-
-            return Ok(result); // Returns new user ID on success
-        }
-
-        [HttpPut("{userGuid:guid}")]
-        [Authorize(Roles = "SystemAdmin")]
-        public async Task<IActionResult> Update(Guid userGuid, [FromBody] UpdateUserRequest request)
-        {
-            // Set the userGuid from route
-            request.UserGuid = userGuid;
-
-            var userSession = new UserSession
+            return new SessionResponse
             {
                 Id = int.Parse(User.FindFirst("id")!.Value),
                 Username = User.Identity!.Name!,
                 Role = User.FindFirst("role")!.Value,
                 Token = ""
             };
+        }
 
-            var result = await _userService.UpdateUserAsync(request, userSession);
+        [HttpPost]
+        [Authorize(Roles = "System")]
+        public async Task<IActionResult> Add([FromBody] CreateUserRequest request)
+        {
+            var session = BuildSession();
+
+            var result = await _userService.AddAsync(request, session);
+
             if (!result.Success)
-                return StatusCode(result.Code ?? 400, result);
+                return StatusCode(result.Code, result);
 
             return Ok(result);
         }
 
+        [HttpPut("{userGuid:guid}")]
+        [Authorize(Roles = "System")]
+        public async Task<IActionResult> Update(Guid userGuid, [FromBody] UpdateUserRequest request)
+        {
+            request.UserGuid = userGuid;
+
+            var session = BuildSession();
+
+            var result = await _userService.UpdateUserAsync(request, session);
+
+            if (!result.Success)
+                return StatusCode(result.Code, result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("Error")]
+        public IActionResult TestError()
+        {
+            throw new Exception("Error Response Testing");
+        }
     }
+
 }

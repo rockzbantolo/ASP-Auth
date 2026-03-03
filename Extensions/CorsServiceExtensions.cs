@@ -1,6 +1,6 @@
 ﻿namespace Base.Api.Extensions
 {
-    public static class CorsExtensions
+    public static class CorsServiceExtensions
     {
         private const string CorsPolicyName = "AllowFrontend";
 

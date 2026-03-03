@@ -39,38 +39,28 @@ namespace Base.Api.Helpers
         /// <returns>JWT token string</returns>
         public string GenerateToken(
             int userId,
+            Guid userGuid,
             string username,
             IEnumerable<string>? roles = null,
             IEnumerable<string>? permissions = null)
         {
             if (string.IsNullOrWhiteSpace(username))
-                throw new ArgumentException("Username cannot be null or empty", nameof(username));
+                throw new ArgumentException("Username required", nameof(username));
 
             var claims = new List<Claim>
             {
+                new(ClaimTypes.NameIdentifier, userId.ToString()),
                 new(ClaimTypes.Name, username),
-                new(ClaimTypes.NameIdentifier, userId.ToString())
+                new("UserGuid", userGuid.ToString())
             };
 
-            // Add roles as claims
-            if (roles != null)
-            {
-                foreach (var role in roles)
-                {
-                    if (!string.IsNullOrWhiteSpace(role))
-                        claims.Add(new Claim(ClaimTypes.Role, role));
-                }
-            }
+            if (roles?.Any() == true)
+                claims.AddRange(roles.Where(r => !string.IsNullOrWhiteSpace(r))
+                                     .Select(r => new Claim(ClaimTypes.Role, r)));
 
-            // Add permissions as claims
-            if (permissions != null)
-            {
-                foreach (var perm in permissions)
-                {
-                    if (!string.IsNullOrWhiteSpace(perm))
-                        claims.Add(new Claim("permission", perm));
-                }
-            }
+            if (permissions?.Any() == true)
+                claims.AddRange(permissions.Where(p => !string.IsNullOrWhiteSpace(p))
+                                           .Select(p => new Claim("permission", p)));
 
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
 

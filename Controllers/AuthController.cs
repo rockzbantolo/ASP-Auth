@@ -3,6 +3,7 @@ using Base.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace Base.Api.Controllers
 {
@@ -12,10 +13,7 @@ namespace Base.Api.Controllers
     {
         private readonly IAuthService _authService = authService;
 
-        /// <summary>
-        /// Login user and return JWT token
-        /// </summary>
-        [AllowAnonymous] // Must allow unauthenticated access
+        [AllowAnonymous]
         [HttpPost("Login")]
         [EnableRateLimiting("LoginPolicy")]
         public async Task<IActionResult> Login([FromBody] AuthRequest request)
@@ -23,14 +21,23 @@ namespace Base.Api.Controllers
             var result = await _authService.LoginAsync(request);
 
             if (!result.Success)
-                return StatusCode(result.Code ?? 400, result); // 401 for invalid credentials, etc.
+                return StatusCode(result.Code, result);
 
-            return Ok(result); // Success with 200
+            return Ok(result);
         }
 
-        /// <summary>
-        /// Test endpoint to verify JWT access
-        /// </summary>
+        [HttpPost("Logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userGuid = User.FindFirstValue("UserGuid");
+            if (string.IsNullOrEmpty(userGuid) || !Guid.TryParse(userGuid, out var guid))
+                return Unauthorized();
+
+            var result = await _authService.LogoutAsync(guid);
+            return Ok(result);
+        }
+
         [Authorize]
         [HttpGet("Test-Auth")]
         public IActionResult TestAuth()

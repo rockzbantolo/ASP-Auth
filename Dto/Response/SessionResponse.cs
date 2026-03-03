@@ -1,6 +1,6 @@
 ﻿namespace Base.Api.Dto.Response
 {
-    public class UserSession
+    public class SessionResponse
     {
         public int Id { get; set; }
         public Guid UserGuid { get; set; }

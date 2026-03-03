@@ -5,6 +5,7 @@ namespace Base.Api.Services.Interfaces
 {
     public interface IAuthService
     {
-        Task<Result<UserSession>> LoginAsync(AuthRequest request);
+        Task<Result<SessionResponse>> LoginAsync(AuthRequest request);
+        Task<ResultResponse> LogoutAsync(Guid userGuid);
     }
 }

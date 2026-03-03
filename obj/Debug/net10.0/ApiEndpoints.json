@@ -17,6 +17,16 @@
   },
   {
     "ContainingType": "Base.Api.Controllers.AuthController",
+    "Method": "Logout",
+    "RelativePath": "Auth/Logout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Base.Api.Controllers.AuthController",
     "Method": "TestAuth",
     "RelativePath": "Auth/Test-Auth",
     "HttpMethod": "GET",
@@ -60,6 +70,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Base.Api.Controllers.UserController",
+    "Method": "TestError",
+    "RelativePath": "User/Error",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

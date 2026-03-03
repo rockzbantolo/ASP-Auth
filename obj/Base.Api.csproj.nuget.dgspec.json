@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\rocky\\source\\repos\\Base.Api\\Base.Api.csproj": {}
+    "C:\\Users\\rocky\\Documents\\GitHub\\ASP-Auth\\Base.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\rocky\\source\\repos\\Base.Api\\Base.Api.csproj": {
+    "C:\\Users\\rocky\\Documents\\GitHub\\ASP-Auth\\Base.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\rocky\\source\\repos\\Base.Api\\Base.Api.csproj",
+        "projectUniqueName": "C:\\Users\\rocky\\Documents\\GitHub\\ASP-Auth\\Base.Api.csproj",
         "projectName": "Base.Api",
-        "projectPath": "C:\\Users\\rocky\\source\\repos\\Base.Api\\Base.Api.csproj",
+        "projectPath": "C:\\Users\\rocky\\Documents\\GitHub\\ASP-Auth\\Base.Api.csproj",
         "packagesPath": "C:\\Users\\rocky\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\rocky\\source\\repos\\Base.Api\\obj\\",
+        "outputPath": "C:\\Users\\rocky\\Documents\\GitHub\\ASP-Auth\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -69,6 +69,10 @@
             "MySql.Data": {
               "target": "Package",
               "version": "[9.6.0, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[4.3.1, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

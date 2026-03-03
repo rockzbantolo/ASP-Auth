@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Base.Api.Models
 {
-    public class User
+    public class UserModel
     {
         [Key]
         [Column("user_id")]
@@ -12,17 +12,44 @@ namespace Base.Api.Models
         [Column("user_guid")]
         public Guid UserGuid { get; set; } = Guid.NewGuid();
 
+        [Required]
+        [StringLength(100)]
         [Column("username")]
         public required string Username { get; set; }
 
+        [Required]
         [Column("password_hash")]
         public required string PasswordHash { get; set; }
 
-        [Column("role")]
-        public required string Role { get; set; }
+        [Column("name")]
+        public string? Name { get; set; }
+
+        [Column("last_name")]
+        public string? LastName { get; set; }
+
+        [Column("email")]
+        public string? Email { get; set; }
+
+        [Column("contact_no")]
+        public string? ContactNo { get; set; }
+
+        [Column("address")]
+        public string? Address { get; set; }
 
         [Column("is_active")]
         public bool IsActive { get; set; } = true;
+
+        [Column("failed_login_count")]
+        public int FailedLoginCount { get; set; } = 0;
+
+        [Column("last_failed_login")]
+        public DateTime? LastFailedLogin { get; set; }
+
+        [Column("locked_until")]
+        public DateTime? LockedUntil { get; set; }
+
+        [Column("is_online")]
+        public bool IsOnline { get; set; } = false;
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -41,25 +68,5 @@ namespace Base.Api.Models
 
         [Column("deleted_by")]
         public string? DeletedBy { get; set; }
-
-        // Optional existing fields
-        [Column("first_name")]
-        public string? FirstName { get; set; }
-
-        [Column("last_name")]
-        public string? LastName { get; set; }
-
-        [Column("email")]
-        public string? Email { get; set; }
-
-        // --- New lockout / failed login columns ---
-        [Column("failed_login_count")]
-        public int FailedLoginCount { get; set; } = 0;
-
-        [Column("last_failed_login")]
-        public DateTime? LastFailedLogin { get; set; }
-
-        [Column("locked_until")]
-        public DateTime? LockedUntil { get; set; }
     }
 }
